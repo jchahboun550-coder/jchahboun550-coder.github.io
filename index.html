@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<title>انضباط الذهب</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,sans-serif;background:#0f172a;color:#e5e7eb;padding:14px 14px 90px}
+h2{margin:6px 0 12px}
+.card{background:#1e293b;border-radius:14px;padding:14px;margin-bottom:12px}
+.btn{display:block;width:100%;padding:14px;margin-top:10px;border:0;border-radius:12px;background:#f59e0b;color:#111;font-size:17px;font-weight:700}
+.red{background:#dc2626;color:#fff}.green{background:#16a34a;color:#fff}.gray{background:#475569;color:#fff}
+.btn:disabled{opacity:.4}
+input,textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #475569;background:#0f172a;color:#fff;font-size:16px;margin-top:8px}
+input[type=range]{padding:0}
+input[type=checkbox]{width:22px;height:22px;margin:0 0 0 10px}
+.chk{display:flex;align-items:center;padding:10px 0;font-size:16px}
+.big{font-size:42px;text-align:center;font-weight:800;color:#fbbf24}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#1e293b;border-top:1px solid #334155}
+nav button{flex:1;padding:8px 2px;background:none;border:0;color:#94a3b8;font-size:11px;line-height:1.5}
+nav button.on{color:#fbbf24;font-weight:700}
+.circ{width:170px;height:170px;margin:20px auto;border-radius:50%;background:#0ea5e9;display:flex;align-items:center;justify-content:center;text-align:center;padding:14px;font-weight:700;transition:transform 4s ease-in-out;color:#fff}
+.muted{color:#94a3b8;font-size:13px}
+.bars{display:flex;align-items:flex-end;height:90px;gap:4px}
+.bars div{flex:1;background:#fbbf24;border-radius:3px 3px 0 0;min-height:2px}
+.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #334155}
+.ban{display:none;background:#b45309;color:#fff;border-radius:12px;padding:12px;margin-bottom:12px;font-weight:700}
+.two{display:flex;gap:10px}
+.pos{color:#4ade80}.neg{color:#f87171}
+</style>
+</head>
+<body>
+<div id="ban" class="ban"></div>
+<div id="main"></div>
+<nav id="nav"></nav>
+<script>
+const K='xau_disc_v1';
+function ds(o){const d=new Date(Date.now()-(o||0)*864e5);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function norm(o){o=o||{};o.start=o.start||ds(0);o.checks=o.checks||{};o.cr=o.cr||[];o.sos=o.sos||[];o.jr=o.jr||[];o.calm=o.calm||0;o.tr=o.tr||[];o.rem=o.rem||{on:0,at:'20:00',last:''};return o}
+let S;try{S=JSON.parse(localStorage.getItem(K)||'null')}catch(e){}
+S=norm(S);
+function save(){try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const CH=['احترمت الخطة ديالي','حطيت ستوب لوس','ما تجاوزتش عدد الصفقات','ما انتقمتش من السوق'];
+const PLAN=[
+['حدد قواعدك','كتب فورقة: XAUUSD غير، أوقات التداول، أقصى عدد صفقات فاليوم، وأقصى خسارة يومية.'],
+['المخاطرة','ما تخاطر بأكثر من 1% فالصفقة. حط الستوب لوس قبل ما تدخل.'],
+['راقب الرغبة','كل مرة بغيتي تدخل برا الخطة، قيّم الرغبة من 0 لـ10 فالتطبيق.'],
+['قاعدة الخسارتين','من بعد خسارتين متتاليتين، وقف 30 دقيقة بلا شاشة.'],
+['التنفس','دير تمرين التهدئة 3 مرات قبل ما تحل المنصة.'],
+['دفتر الدخول','قبل كل صفقة كتب فالدفتر السبب ديال الدخول فجملة وحدة.'],
+['مراجعة الأسبوع','عاود قرا الدفتر. شنو هي المرات اللي خرجتي فيها على الخطة؟'],
+['عرف المحفز','واش كتنتقم بعد الخسارة؟ ملل؟ خوف من الفوات (FOMO)؟ سميه وكتبو.'],
+['وقت الأخبار','تجنب الدخول وقت الأخبار الكبرى (NFP, FOMC) إلا إلى كانت فالخطة.'],
+['الصبر','دير نهار كاملو كتراقب بلا تداول إلى ما كانت حتى فرصة فالخطة.'],
+['حجم الصفقة','ما تكبرش اللوت بعد الخسارة. نفس الحجم دايما.'],
+['شنو تحسن؟','قارن هاد الأسبوع بالأول: عدد الصفقات برا الخطة، مستوى الرغبة.'],
+['السيناريو الأسوأ','تخيل صفقة خاسرة بالستوب لوس كامل. كيفاش غادي تتصرف بهدوء؟'],
+['المراجعة النهائية','شوف الإحصائيات وكتب 3 قواعد غادي تكمل بها بعد 14 يوم.']];
+function dayNum(){return Math.floor((new Date(ds(0))-new Date(S.start))/864e5)+1}
+let tab='home',timer=null,ctm=null;
+
+function home(){const n=Math.min(Math.max(dayNum(),1),14),p=PLAN[n-1],c=S.checks[ds(0)]||[0,0,0,0];
+return `<h2>نهار ${n} من 14</h2>
+<div class=card><b>${p[0]}</b><p>${p[1]}</p></div>
+<div class=card><b>انضباط اليوم</b>${CH.map((x,i)=>`<label class=chk><input type=checkbox ${c[i]?'checked':''} onchange="chk(${i},this.checked)">${x}</label>`).join('')}</div>
+<div class=card><b>شحال بغيتي تدخل دابا؟ (0-10)</b>
+<input type=range min=0 max=10 value=5 id=cv oninput="$('cvo').textContent=this.value">
+<div class=big id=cvo>5</div><input id=cn placeholder="ملاحظة (اختياري)">
+<button class=btn onclick="addCr()">سجل</button><p class=muted id=cmsg></p></div>
+<div class=card><label class=chk><input type=checkbox ${S.rem.on?'checked':''} onchange="remSet(this.checked)">⏰ فكرني كل نهار</label>
+<input type=time id=rt value="${S.rem.at}" onchange="remTime(this.value)">
+<p class=muted>التذكير كيبان غير ملي التطبيق يكون مفتوح ولا فالخلفية. باش تضمنو، دير منبه فالهاتف.</p></div>`}
+function chk(i,v){const k=ds(0);S.checks[k]=S.checks[k]||[0,0,0,0];S.checks[k][i]=v?1:0;save();remCheck()}
+function addCr(){S.cr.push({t:Date.now(),v:+$('cv').value,n:$('cn').value});save();$('cn').value='';$('cmsg').textContent='تسجل ✅'}
+
+function remSet(v){S.rem.on=v?1:0;save();
+try{if(v&&'Notification' in window&&Notification.permission=='default')Notification.requestPermission()}catch(e){}
+remCheck()}
+function remTime(v){S.rem.at=v||'20:00';save();remCheck()}
+function notify(t,b){try{if('Notification' in window&&Notification.permission=='granted'&&navigator.serviceWorker)
+navigator.serviceWorker.ready.then(r=>r.showNotification(t,{body:b,icon:'icon-192.png'}))}catch(e){}}
+function remCheck(){const b=$('ban');if(!b)return;
+const n=new Date(),hm=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+const c=S.checks[ds(0)]||[0,0,0,0],done=c.every(Boolean);
+if(S.rem.on&&hm>=S.rem.at&&!done){b.style.display='block';b.textContent='⏰ ما تنساش تكمل لائحة الانضباط ديال اليوم';
+if(S.rem.last!=ds(0)){S.rem.last=ds(0);save();notify('انضباط الذهب','ما تنساش تكمل لائحة الانضباط ديال اليوم ✅')}}
+else b.style.display='none'}
+
+function sos(){return `<h2>مقاومة الانتقام</h2>
+<div class=card><p>خسرتي وبغيتي تعوض بسرعة؟ هادي هي اللحظة الأخطر. وقف 5 دقايق قبل أي قرار.</p></div>
+<button class="btn red" onclick="startSos()">🛑 بغيت ننتقم من السوق</button><div id=sosbox></div>`}
+function startSos(){let end=Date.now()+300000;
+$('sosbox').innerHTML=`<div class=card><div class=big id=sc>05:00</div>
+<p>1) واش هاد الصفقة كاينة فخطتي المكتوبة؟<br>2) واش كندخل باش نعوض الخسارة؟ هادي ماشي استراتيجية.<br>3) بعد من الشاشة، شرب الما، تحرك شوية.</p>
+<button class=btn onclick="go('calm')">🫁 دير تمرين تهدئة</button>
+<button class="btn green" id=sk disabled onclick="sosEnd('resisted')">قاومت ✅</button>
+<button class="btn gray" onclick="sosEnd('lapse')">تاجرت ❌ (سجلها بصدق)</button></div>`;
+clearInterval(timer);timer=setInterval(()=>{const e=$('sc');if(!e){clearInterval(timer);return}
+let r=Math.max(0,Math.ceil((end-Date.now())/1000));e.textContent=String(Math.floor(r/60)).padStart(2,'0')+':'+String(r%60).padStart(2,'0');
+if(r==0){$('sk').disabled=false}},500)}
+function sosEnd(r){clearInterval(timer);S.sos.push({t:Date.now(),r});save();
+$('sosbox').innerHTML=`<div class=card><p>${r=='resisted'?'برافو، هاد القرار هو الانضباط الحقيقي. 💪':'تسجلات. الخسارة ماشي نهاية العالم، المهم ترجع للخطة وما تضاعفش.'}</p></div>`}
+
+function calm(){return `<h2>تمرين التهدئة 4-7-8</h2><div class=card><div id=circ class=circ>جاهز</div>
+<p id=cm class=muted style="text-align:center"></p>
+<button class=btn onclick="calmGo()">ابدا</button><button class="btn gray" onclick="clearTimeout(ctm)">وقف</button></div>
+<p class=muted>عدد المرات اللي كملتي: ${S.calm}</p>`}
+const PH=[['شهق من النيف',4,1.35],['حبس نفسك',7,1.35],['زفر بشوية من الفم',8,1]];
+function calmGo(){clearTimeout(ctm);step(0)}
+function step(i){const c=$('circ');if(!c)return;
+if(i>=12){S.calm++;save();c.textContent='برافو 👏';$('cm').textContent='كملتي 4 دورات';return}
+const p=PH[i%3];c.textContent=p[0];c.style.transitionDuration=p[1]+'s';c.style.transform='scale('+p[2]+')';
+$('cm').textContent='دورة '+(Math.floor(i/3)+1)+' من 4';ctm=setTimeout(()=>step(i+1),p[1]*1000)}
+
+function trades(){const L=S.tr.slice().reverse().slice(0,15);
+return `<h2>الصفقات</h2><div class=card><b>سجل صفقة</b>
+<input id=ta type=number inputmode=decimal placeholder="المبلغ بالدولار (بلا ناقص)">
+<label class=chk><input type=checkbox id=tp checked>كانت فالخطة ديالي</label>
+<input id=tn placeholder="ملاحظة (اختياري)">
+<div class=two><button class="btn green" onclick="addTr(1)">✅ ربحت</button><button class="btn red" onclick="addTr(-1)">❌ خسرت</button></div></div>
+${L.map(x=>`<div class=card><div class=row style="border:0"><b class="${x.a>=0?'pos':'neg'}">${x.a>0?'+':''}${x.a}$</b><span>${x.p?'فالخطة ✅':'برا الخطة ⚠️'}</span></div>
+<div class=muted>${new Date(x.t).toLocaleString('ar')}${x.n?' · '+esc(x.n):''}</div>
+<button class="btn gray" onclick="delTr(${x.t})">مسح</button></div>`).join('')}`}
+function addTr(s){const v=parseFloat($('ta').value);if(!(v>0)){alert('كتب المبلغ');return}
+S.tr.push({t:Date.now(),a:s*Math.round(v*100)/100,p:$('tp').checked?1:0,n:$('tn').value});save();go('trades')}
+function delTr(t){if(confirm('تمسح هاد الصفقة؟')){S.tr=S.tr.filter(x=>x.t!=t);save();go('trades')}}
+
+function jr(){return `<h2>دفتر اليوميات</h2><div class=card><textarea id=jt rows=4 placeholder="شنو دخلتي ولاش؟ شنو حسيتي؟"></textarea>
+<button class=btn onclick="addJr()">حفظ</button></div>
+${S.jr.slice().reverse().map(x=>`<div class=card><div class=muted>${new Date(x.t).toLocaleString('ar')}</div><p>${esc(x.x).replace(/\n/g,'<br>')}</p><button class="btn gray" onclick="delJr(${x.t})">مسح</button></div>`).join('')}`}
+function addJr(){const v=$('jt').value.trim();if(!v)return;S.jr.push({t:Date.now(),x:v});save();go('jr')}
+function delJr(t){if(confirm('تمسح هاد الكتابة؟')){S.jr=S.jr.filter(x=>x.t!=t);save();go('jr')}}
+
+function stats(){const ks=Object.keys(S.checks),sc=ks.map(k=>S.checks[k].filter(Boolean).length/4);
+const pct=sc.length?Math.round(sc.reduce((a,b)=>a+b,0)/sc.length*100):0;
+const win=S.sos.filter(x=>x.r=='resisted').length,lap=S.sos.length-win;
+const av=S.cr.length?(S.cr.reduce((a,b)=>a+b.v,0)/S.cr.length).toFixed(1):'-';
+let st=0;for(let i=0;i<60;i++){const c=S.checks[ds(i)];if(c&&c.every(Boolean))st++;else if(i>0)break}
+let bars='';for(let i=13;i>=0;i--){const c=S.checks[ds(i)];bars+=`<div style="height:${c?c.filter(Boolean).length*25:0}%"></div>`}
+const T=S.tr,cnt=T.length,tot=T.reduce((a,b)=>a+b.a,0),w=T.filter(x=>x.a>0).length;
+const inP=T.filter(x=>x.p).reduce((a,b)=>a+b.a,0),outP=T.filter(x=>!x.p).reduce((a,b)=>a+b.a,0);
+const f=n=>`<b class="${n>=0?'pos':'neg'}">${n>0?'+':''}${Math.round(n*100)/100}$</b>`;
+return `<h2>الإحصائيات</h2><div class=card><div class=big>${pct}%</div><p class=muted style="text-align:center">نسبة الانضباط العامة</p></div>
+<div class=card><div class=row><span>أيام كاملة متتالية</span><b>${st}</b></div>
+<div class=row><span>أيام مسجلة</span><b>${ks.length}</b></div>
+<div class=row><span>قاومت الانتقام</span><b>${win}</b></div>
+<div class=row><span>سقطت</span><b>${lap}</b></div>
+<div class=row><span>معدل الرغبة</span><b>${av}</b></div>
+<div class=row><span>تمارين تهدئة</span><b>${S.calm}</b></div></div>
+<div class=card><b>الصفقات</b>
+<div class=row><span>عدد الصفقات</span><b>${cnt}</b></div>
+<div class=row><span>نسبة الربح</span><b>${cnt?Math.round(w/cnt*100)+'%':'-'}</b></div>
+<div class=row><span>الحصيلة الإجمالية</span>${f(tot)}</div>
+<div class=row><span>صفقات فالخطة</span>${f(inP)}</div>
+<div class=row><span>صفقات برا الخطة</span>${f(outP)}</div></div>
+<div class=card><b>آخر 14 يوم</b><div class=bars>${bars}</div></div>
+<div class=card><b>نسخة احتياطية</b><p class=muted>انسخ النص وحطو فالملاحظات. للاسترجاع: لصقو هنا وكليكي استرجاع.</p>
+<textarea id=bk rows=4>${esc(JSON.stringify(S))}</textarea>
+<button class=btn onclick="$('bk').select();$('bk').setSelectionRange(0,9999999);document.execCommand('copy')">نسخ</button>
+<button class="btn gray" onclick="rest()">استرجاع</button>
+<button class="btn red" onclick="rst()">مسح كل شي وبداية جديدة</button></div>`}
+function rest(){try{const o=JSON.parse($('bk').value);if(o&&o.checks){S=norm(o);save();go('stats')}else alert('النص ماشي صحيح')}catch(e){alert('النص ماشي صحيح')}}
+function rst(){if(confirm('غادي يتمسح كلشي. متأكد؟')){S=norm({});save();go('home')}}
+
+const V={home,sos,calm,trades,jr,stats};
+const NV=[['home','📅','اليوم'],['sos','🛑','ضبط'],['calm','🫁','تهدئة'],['trades','💰','صفقات'],['jr','📓','دفتر'],['stats','📊','أرقام']];
+function go(t){tab=t;clearTimeout(ctm);$('main').innerHTML=V[t]()+'<p class=muted>تطبيق للتدريب النفسي فقط. ماشي نصيحة مالية. التداول فيه مخاطرة.</p>';
+$('nav').innerHTML=NV.map(x=>`<button class="${x[0]==t?'on':''}" onclick="go('${x[0]}')"><span style="font-size:18px">${x[1]}</span><br>${x[2]}</button>`).join('');
+window.scrollTo(0,0);remCheck()}
+$('ban').onclick=()=>go('home');
+setInterval(remCheck,30000);
+go('home');
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
